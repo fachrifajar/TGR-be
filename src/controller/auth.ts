@@ -6,6 +6,8 @@ const REF_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 const DOMAIN_NAME = process.env.DOMAIN_NAME;
 const DOMAIN_EMAIL = process.env.DOMAIN_EMAIL;
 const DOMAIN_PWD = process.env.DOMAIN_PWD;
+const DOMAIN_HOST = process.env.DOMAIN_HOST;
+const DOMAIN_PORT = process.env.DOMAIN_PORT;
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
@@ -46,8 +48,8 @@ const register = async (req: Request, res: Response) => {
     });
 
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
+      host: DOMAIN_HOST,
+      port: DOMAIN_PORT,
       secure: true,
       auth: {
         user: DOMAIN_EMAIL,
@@ -204,8 +206,8 @@ const resendVerification = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Email already verified!" });
 
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
+      host: DOMAIN_HOST,
+      port: DOMAIN_PORT,
       secure: true,
       auth: {
         user: DOMAIN_EMAIL,
@@ -274,8 +276,8 @@ const sendResetUrl = async (req: Request, res: Response) => {
     });
 
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
+      host: DOMAIN_HOST,
+      port: DOMAIN_PORT,
       secure: true,
       auth: {
         user: DOMAIN_EMAIL,
@@ -382,6 +384,14 @@ const refreshToken = async (req: Request, res: Response) => {
   }
 };
 
+const googleAuth = async (req: Request, res: Response) => {
+  res.send("Hello There");
+};
+
+const googleFailure = async (req: Request, res: Response) => {
+  res.send("Something went wrong!");
+};
+
 module.exports = {
   register,
   login,
@@ -390,4 +400,6 @@ module.exports = {
   sendResetUrl,
   resetPwd,
   refreshToken,
+  googleAuth,
+  googleFailure,
 };

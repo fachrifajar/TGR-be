@@ -35,4 +35,8 @@ const validateToken = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-module.exports = { validateToken };
+const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
+  req.user ? next() : res.sendStatus(401);
+};
+
+module.exports = { validateToken, isLoggedIn };
