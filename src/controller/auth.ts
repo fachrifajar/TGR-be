@@ -112,9 +112,9 @@ const login = async (req: Request, res: Response) => {
 
     const isVerified = user?.is_verified;
     if (!isVerified)
-      return res
-        .status(401)
-        .json({ message: "Email not verified, Please verify your email" });
+      return res.status(401).json({
+        message: "Email not verified, Please check your Email / Spam",
+      });
 
     const isPasswordValid = await bcrypt.compare(pwd, user.pwd);
     if (!isPasswordValid)
@@ -266,6 +266,11 @@ const sendResetUrl = async (req: Request, res: Response) => {
     });
     if (!user) return res.status(401).json({ message: "Email not found" });
 
+    if (!user?.is_verified)
+      return res.status(401).json({
+        message: "Email not verified, Please check your Email / Spam",
+      });
+
     const getRandomStr = generateRandomStr(128);
 
     await prisma.user.update({
@@ -326,10 +331,21 @@ const resetPwd = async (req: Request, res: Response) => {
   type RequestBody = {
     pwd: string;
     email: string;
+    reset_token: string;
   };
+
   try {
-    const { pwd, email }: RequestBody = req.body;
+    const { pwd, email, reset_token }: RequestBody = req.body;
     const hashedPwd = await bcrypt.hash(pwd, 10);
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (user?.reset_token !== reset_token)
+      return res.status(401).json({
+        message: "USER NOT AUTHORIZED",
+      });
 
     await prisma.user.update({
       where: { email },
