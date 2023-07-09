@@ -1,0 +1,60 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @unique @default(cuid())
+  pwd               String
+  email             String   @unique
+  username          String?  @unique
+  verification_code Int?     @unique
+  is_verified       Boolean  @default(false)
+  profile_picture   String?
+  phone_number      Int?
+  company           String?
+  company_picture   String?
+  save              String[] @default([])
+  created_at        DateTime @default(now())
+  updated_at        DateTime @default(now()) @updatedAt
+  is_admin          Boolean  @default(false)
+  ref_token         String?
+  reset_token       String?
+  Post              Post[]
+}
+
+model Post {
+  id              String   @id @unique @default(cuid())
+  user            User     @relation(fields: [user_id], references: [id])
+  user_id         String
+  title           String
+  address         String
+  provinsi        String
+  kota            String
+  kecamatan       String
+  kelurahan       String
+  type            String
+  price           Int
+  description     String
+  bedroom_qty     Int
+  bathroom_qty    Int
+  carport_qty     Int
+  land_area       Int
+  property_area   Int
+  is_rent         Boolean
+  interior        String
+  price_per_meter Int
+  wattage         Int
+  Sertificate     String
+  map_location    String
+  available_from  DateTime
+  is_archived     Boolean  @default(false)
+  picture         String[] @default([])
+  created_at      DateTime @default(now())
+  updated_at      DateTime @default(now()) @updatedAt
+}
