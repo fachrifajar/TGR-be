@@ -32,133 +32,96 @@ const getProfile = async (req: Request, res: Response) => {
 const editProfile = async (req: Request, res: Response) => {
   interface RequestBody {
     username: string;
-    description: string;
     profile_picture: Object;
-    post_picture: Object;
+    phone_number: string;
   }
   try {
-    const {
-      username,
-      description,
-      profile_picture,
-      post_picture,
-    }: RequestBody = req.body;
+    const { username, profile_picture, phone_number }: RequestBody = req.body;
 
     const getIdToken: string = (req as any).id;
 
-    // const user = await prisma.user.findUnique({
-    //   where: { id: getIdToken },
-    //   select: {
-    //     username: true,
-    //     description: true,
-    //     profile_picture: true,
-    //     post_picture: true,
-    //   },
-    // });
-    // const existingProfilePicture = user?.profile_picture;
-    // const existingPostPicture = user?.post_picture;
+    const user = await prisma.user.findUnique({
+      where: { id: getIdToken },
+      select: {
+        username: true,
+        profile_picture: true,
+        phone_number: true,
+      },
+    });
+    const existingProfilePicture = user?.profile_picture;
 
-    // const getProfilePicture = (req as any)?.files?.profile_picture;
-    // const getPostPicture = (req as any)?.files?.post_picture;
+    const getProfilePicture = (req as any)?.files?.profile_picture;
 
-    // let profilePictureCloudinary;
-    // let postPictureCloudinary;
+    let profilePictureCloudinary;
 
-    // const validateUsername = await prisma.user.findMany({
-    //   where: {
-    //     username,
-    //     NOT: {
-    //       id: getIdToken,
-    //     },
-    //   },
-    // });
+    const validateUsername = await prisma.user.findMany({
+      where: {
+        username,
+        NOT: {
+          id: getIdToken,
+        },
+      },
+    });
 
-    // if (username && validateUsername.length) {
-    //   return res
-    //     .status(400)
-    //     .json({ message: "That username is already taken" });
-    // }
+    if (username && validateUsername.length) {
+      return res.status(400).json({ message: "Username is already taken" });
+    }
 
-    // if ((req as any).files) {
-    //   // Delete existing picture if exist
-    //   if (existingPostPicture) {
-    //     await cloudinary.v2.uploader.destroy(
-    //       existingPostPicture,
-    //       { folder: "link-hub" },
-    //       function (error: any, result: any) {
-    //         if (error) {
-    //           throw error;
-    //         }
-    //       }
-    //     );
-    //   }
-    //   if (existingProfilePicture) {
-    //     await cloudinary.v2.uploader.destroy(
-    //       existingProfilePicture,
-    //       { folder: "link-hub" },
-    //       function (error: any, result: any) {
-    //         if (error) {
-    //           throw error;
-    //         }
-    //       }
-    //     );
-    //   }
+    if ((req as any).files) {
+      // Delete existing picture if exist
 
-    //   // Upload new picture
-    //   if (getProfilePicture) {
-    //     await cloudinary.v2.uploader.upload(
-    //       getProfilePicture.tempFilePath,
-    //       { public_id: uuidv4(), folder: "link-hub" },
-    //       async function (error: any, result: any) {
-    //         if (error) {
-    //           throw error;
-    //         }
+      if (existingProfilePicture) {
+        await cloudinary.v2.uploader.destroy(
+          existingProfilePicture,
+          { folder: "TGR" },
+          function (error: any, result: any) {
+            if (error) {
+              throw error;
+            }
+          }
+        );
+      }
 
-    //         profilePictureCloudinary = result?.public_id;
-    //       }
-    //     );
-    //   }
+      // Upload new picture
+      if (getProfilePicture) {
+        await cloudinary.v2.uploader.upload(
+          getProfilePicture.tempFilePath,
+          { public_id: uuidv4(), folder: "TGR" },
+          async function (error: any, result: any) {
+            if (error) {
+              throw error;
+            }
 
-    //   if (getPostPicture) {
-    //     await cloudinary.v2.uploader.upload(
-    //       getPostPicture.tempFilePath,
-    //       { public_id: uuidv4(), folder: "link-hub" },
-    //       async function (error: any, result: any) {
-    //         if (error) {
-    //           throw error;
-    //         }
-    //         postPictureCloudinary = result?.public_id;
-    //       }
-    //     );
-    //   }
-    // }
+            profilePictureCloudinary = result?.public_id;
+          }
+        );
+      }
+    }
 
-    // const updatedUser = await prisma.user.update({
-    //   where: { id: getIdToken },
-    //   data: {
-    //     username: username ? username.toLowerCase() : user?.username,
-    //     description: description ? description : user?.description,
-    //     profile_picture: getProfilePicture
-    //       ? profilePictureCloudinary
-    //       : user?.profile_picture,
-    //     post_picture: getPostPicture
-    //       ? postPictureCloudinary
-    //       : user?.post_picture,
-    //   },
-    // });
+    await prisma.user.update({
+      where: { id: getIdToken },
+      data: {
+        username: username ? username.toLowerCase() : user?.username,
+        phone_number: phone_number ? phone_number : user?.phone_number,
+        profile_picture: getProfilePicture
+          ? profilePictureCloudinary
+          : user?.profile_picture,
+      },
+    });
 
-    // res.status(200).json({
-    //   message: `Success update profile`,
-    //   data: {
-    //     ...req.body,
-    //     profilePictureCloudinary,
-    //     postPictureCloudinary,
-    //   },
-    // });
+    res.status(200).json({
+      message: `Success update profile`,
+      data: {
+        ...req.body,
+        profilePictureCloudinary,
+      },
+    });
   } catch (error: any) {
     console.log(error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 
 module.exports = { getProfile, editProfile };

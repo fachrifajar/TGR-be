@@ -146,6 +146,13 @@ const login = async (req: Request, res: Response) => {
       secure: true,
     });
 
+    await prisma.user.update({
+      where: { id: user?.id },
+      data: {
+        ref_token: refreshToken,
+      },
+    });
+
     res.status(200).json({
       message: `Login successfull!`,
       data: {

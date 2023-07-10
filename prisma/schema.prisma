@@ -16,7 +16,7 @@ model User {
   verification_code Int?     @unique
   is_verified       Boolean  @default(false)
   profile_picture   String?
-  phone_number      Int?
+  phone_number      String?
   company           String?
   company_picture   String?
   save              String[] @default([])
