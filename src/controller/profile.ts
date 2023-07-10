@@ -122,6 +122,53 @@ const editProfile = async (req: Request, res: Response) => {
   }
 };
 
+const deletePicture = async (req: Request, res: Response) => {
+  interface RequestBody {
+    profile_picture: boolean;
+  }
+  try {
+    const { profile_picture }: RequestBody = req.body;
+    const getIdToken: string = (req as any).id;
 
+    const user = await prisma.user.findUnique({
+      where: { id: getIdToken },
+      select: {
+        profile_picture: true,
+      },
+    });
+    const existingProfilePicture = user?.profile_picture;
 
-module.exports = { getProfile, editProfile };
+    if (!profile_picture)
+      return res.status(400).json({ message: "Please pick options to delete" });
+
+    if (profile_picture) {
+      await cloudinary.v2.uploader.destroy(
+        existingProfilePicture,
+        { folder: "link-hub" },
+        function (error: any, result: any) {
+          if (error) {
+            throw error;
+          }
+        }
+      );
+    }
+
+    await prisma.user.update({
+      where: { id: getIdToken },
+      data: {
+        profile_picture: null,
+      },
+    });
+
+    res.status(202).json({
+      message: `Success Delete Picture`,
+      data: {
+        profile_picture: null,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+module.exports = { getProfile, editProfile, deletePicture };
