@@ -1,13 +1,9 @@
 require("dotenv").config();
 import { Request, Response, NextFunction } from "express";
-const { Validator } = require("node-input-validator");
 const jwt = require("jsonwebtoken");
 const ACC_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 const validateToken = (req: Request, res: Response, next: NextFunction) => {
-  interface CustomRequest extends Request {
-    id?: string;
-  }
   if (
     !req?.headers?.authorization?.replace("Bearer ", "") &&
     req?.query?.token &&

@@ -40,7 +40,7 @@ app.use(
 app.use(middleware.logRequest);
 
 app.use("/auth", require("./routes/auth"));
-
+app.use("/profile", require("./routes/profile"));
 // app.use(
 //   session({
 //     secret: "mysecret",
