@@ -205,6 +205,7 @@ const editPost = async (req: Request, res: Response) => {
     map_location?: string;
     picture?: string[];
     id: string;
+    picture_remove?: string;
   };
 
   try {
@@ -241,6 +242,7 @@ const editPost = async (req: Request, res: Response) => {
       map_location,
       picture,
       id,
+      picture_remove,
     }: RequestBody = req.body;
 
     const user = await prisma.post.findUnique({
@@ -256,7 +258,32 @@ const editPost = async (req: Request, res: Response) => {
 
     const existingPicture = user?.picture;
     const getPicture = (req as any)?.files?.picture;
-    let profilePictureCloudinary;
+
+    let profilePictureCloudinary: Array<string> | undefined;
+    let existingValues: Array<string> | undefined;
+
+    const pictureRemoveArr = picture_remove?.split(",");
+    if (picture_remove?.length) {
+      existingValues = existingPicture?.filter(
+        (value) => !picture_remove?.includes(value)
+      );
+    }
+
+    if (pictureRemoveArr?.length) {
+      for (let i = 0; i < pictureRemoveArr?.length; i++) {
+        const picture = pictureRemoveArr[i];
+
+        await cloudinary.v2.uploader.destroy(
+          picture,
+          { folder: "TGR" },
+          function (error: any, result: any) {
+            if (error) {
+              throw error;
+            }
+          }
+        );
+      }
+    }
 
     if (getPicture) {
       const uploadedPictureIds: string[] = [];
@@ -298,11 +325,24 @@ const editPost = async (req: Request, res: Response) => {
       profilePictureCloudinary = uploadedPictureIds;
     }
 
-    let combinedPicture;
-    if (existingPicture) {
-      combinedPicture = profilePictureCloudinary?.concat(existingPicture);
+    let combinedPicture: Array<string> | undefined;
+
+    if (profilePictureCloudinary?.length) {
+      if (existingPicture) {
+        if (existingValues) {
+          combinedPicture = [...profilePictureCloudinary, ...existingValues];
+        } else {
+          combinedPicture = [...profilePictureCloudinary, ...existingPicture];
+        }
+      }
     } else {
-      combinedPicture = profilePictureCloudinary;
+      if (existingPicture) {
+        if (existingValues) {
+          combinedPicture = existingValues;
+        } else {
+          combinedPicture = existingPicture;
+        }
+      }
     }
 
     const editPost = await prisma.post.update({
@@ -350,7 +390,10 @@ const editPost = async (req: Request, res: Response) => {
         wattage: wattage ? wattage : user?.wattage,
         sertificate: sertificate ? sertificate : user?.sertificate,
         map_location: map_location ? map_location : user?.map_location,
-        picture: combinedPicture ? combinedPicture : user?.picture,
+        picture:
+          combinedPicture?.length || picture_remove
+            ? combinedPicture
+            : user?.picture,
       },
       select: {
         id: true,
@@ -358,12 +401,14 @@ const editPost = async (req: Request, res: Response) => {
     });
 
     res.status(201).json({
-      message: `Success add new Post: ${editPost?.id}`,
+      message: `Success Edit post: ${editPost?.id}`,
     });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 
 module.exports = { addPost, editPost };
