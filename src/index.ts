@@ -8,7 +8,6 @@ const cookieParser = require("cookie-parser");
 var middleware = require("./middleware/log");
 require("./controller/googleInit");
 
-
 const app = express();
 app.use(
   cors({
@@ -38,7 +37,7 @@ app.use(middleware.logRequest);
 
 app.use("/auth", require("./routes/auth"));
 app.use("/profile", require("./routes/profile"));
-
+app.use("/post", require("./routes/post"));
 
 app.listen(2626, () =>
   console.log("REST API server ready at: http://localhost:2626")

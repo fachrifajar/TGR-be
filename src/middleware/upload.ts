@@ -72,11 +72,20 @@ const fileExtLimiter = (allowedExtArray: string[]) => {
     if (!(req as any).files) {
       next();
     } else {
-      const files: any = (req as any).files;
+      const files: any = Array.isArray((req as any).files)
+        ? (req as any).files
+        : Object.values((req as any).files);
 
       const fileExtensions: string[] = [];
-      Object.keys(files).forEach((key) => {
-        fileExtensions.push(path.extname(files[key].name));
+
+      files.forEach((file: any) => {
+        if (Array.isArray(file)) {
+          file.forEach((f: any) => {
+            fileExtensions.push(path.extname(f.name));
+          });
+        } else {
+          fileExtensions.push(path.extname(file.name));
+        }
       });
 
       // Are the file extensions allowed?
@@ -99,6 +108,7 @@ const fileExtLimiter = (allowedExtArray: string[]) => {
     }
   };
 };
+
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

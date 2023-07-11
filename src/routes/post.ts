@@ -1,16 +1,11 @@
 import express from "express";
 const router = express.Router();
-const {
-  getProfile,
-  editProfile,
-  deletePicture,
-} = require("../controller/profile");
+const { addPost } = require("../controller/post");
 const { validateToken } = require("../middleware/auth");
 const middlewareUpload = require("../middleware/upload");
 
-router.get("/", validateToken, getProfile);
-router.patch(
-  "/edit",
+router.post(
+  "/add",
   validateToken,
   middlewareUpload.fileExtLimiter([
     ".png",
@@ -21,9 +16,7 @@ router.patch(
     ".JPEG",
   ]),
   middlewareUpload.fileSizeLimiter,
-  editProfile
+  addPost
 );
-
-router.delete("/images/delete", validateToken, deletePicture);
 
 module.exports = router;

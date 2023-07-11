@@ -41,26 +41,26 @@ model Post {
   type                String
   sub_type            String
   description         String
-  bedroom_qty         Int
-  bathroom_qty        Int
-  carport_qty         Int?
+  bedroom_qty         String
+  bathroom_qty        String
+  carport_qty         String?
   story_qty           String?
-  bathroom_maid_qty   Int?
-  bedroom_maid_qty    Int?
-  total_room          Int?
-  year_of_build       Int?
+  bathroom_maid_qty   String?
+  bedroom_maid_qty    String?
+  total_room          String?
+  year_of_build       String?
   facilities_interior String[] @default([])
   facilities_exterior String[] @default([])
-  land_area           Int
-  property_area       Int
+  land_area           String?
+  property_area       String
   is_rent             Boolean
   rent_period         String?
   interior            String
-  price               Int
+  price               String
   available_from      DateTime
-  price_per_meter     Int
-  wattage             Int?
-  Sertificate         String
+  price_per_meter     String?
+  wattage             String?
+  sertificate         String
   map_location        String
   is_archived         Boolean  @default(false)
   picture             String[] @default([])
