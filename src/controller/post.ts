@@ -210,6 +210,7 @@ const editPost = async (req: Request, res: Response) => {
 
   try {
     const {
+      id,
       title,
       address,
       provinsi,
@@ -241,7 +242,6 @@ const editPost = async (req: Request, res: Response) => {
       sertificate,
       map_location,
       picture,
-      id,
       picture_remove,
     }: RequestBody = req.body;
 
@@ -270,9 +270,7 @@ const editPost = async (req: Request, res: Response) => {
     }
 
     if (pictureRemoveArr?.length) {
-      for (let i = 0; i < pictureRemoveArr?.length; i++) {
-        const picture = pictureRemoveArr[i];
-
+      for (const picture of pictureRemoveArr) {
         await cloudinary.v2.uploader.destroy(
           picture,
           { folder: "TGR" },
@@ -290,35 +288,23 @@ const editPost = async (req: Request, res: Response) => {
 
       if (Array.isArray(getPicture)) {
         // Handle multiple pictures
-        for (let i = 0; i < getPicture.length; i++) {
-          const picture = getPicture[i];
-
+        for (const picture of getPicture) {
           // Upload each picture
-          await cloudinary.v2.uploader.upload(
+          const result = await cloudinary.v2.uploader.upload(
             picture.tempFilePath,
-            { public_id: uuidv4(), folder: "TGR" },
-            (error: any, result: any) => {
-              if (error) {
-                throw error;
-              }
-
-              uploadedPictureIds.push(result?.public_id);
-            }
+            { public_id: uuidv4(), folder: "TGR" }
           );
+
+          uploadedPictureIds.push(result?.public_id);
         }
       } else {
         // Handle single picture
-        await cloudinary.v2.uploader.upload(
+        const result = await cloudinary.v2.uploader.upload(
           getPicture.tempFilePath,
-          { public_id: uuidv4(), folder: "TGR" },
-          (error: any, result: any) => {
-            if (error) {
-              throw error;
-            }
-
-            uploadedPictureIds.push(result?.public_id);
-          }
+          { public_id: uuidv4(), folder: "TGR" }
         );
+
+        uploadedPictureIds.push(result?.public_id);
       }
 
       // Assign uploaded picture IDs to profilePictureCloudinary
@@ -328,68 +314,49 @@ const editPost = async (req: Request, res: Response) => {
     let combinedPicture: Array<string> | undefined;
 
     if (profilePictureCloudinary?.length) {
-      if (existingPicture) {
-        if (existingValues) {
-          combinedPicture = [...profilePictureCloudinary, ...existingValues];
-        } else {
-          combinedPicture = [...profilePictureCloudinary, ...existingPicture];
-        }
-      }
+      combinedPicture = [
+        ...(existingValues || existingPicture || []),
+        ...profilePictureCloudinary,
+      ];
     } else {
-      if (existingPicture) {
-        if (existingValues) {
-          combinedPicture = existingValues;
-        } else {
-          combinedPicture = existingPicture;
-        }
-      }
+      combinedPicture = existingValues || existingPicture;
     }
 
     const editPost = await prisma.post.update({
       where: { id },
       data: {
-        title: title ? title : user?.title,
-        address: address ? address : user?.address,
-        provinsi: provinsi ? provinsi : user?.provinsi,
-        kota: kota ? kota : user?.kota,
-        kecamatan: kecamatan ? kecamatan : user?.kecamatan,
-        kelurahan: kelurahan ? kelurahan : user?.kelurahan,
-        type: type ? type : user?.type,
-        sub_type: sub_type ? sub_type : user?.sub_type,
-        description: description ? description : user?.description,
-        bedroom_qty: bedroom_qty ? bedroom_qty : user?.bedroom_qty,
-        bathroom_qty: bathroom_qty ? bathroom_qty : user?.bathroom_qty,
-        carport_qty: carport_qty ? carport_qty : user?.carport_qty,
-        story_qty: story_qty ? story_qty : user?.story_qty,
-        bathroom_maid_qty: bathroom_maid_qty
-          ? bathroom_maid_qty
-          : user?.bathroom_maid_qty,
-        bedroom_maid_qty: bedroom_maid_qty
-          ? bedroom_maid_qty
-          : user?.bedroom_maid_qty,
-        total_room: total_room ? total_room : user?.total_room,
-        year_of_build: year_of_build ? year_of_build : user?.year_of_build,
-        facilities_interior: facilities_interior
-          ? facilities_interior
-          : user?.facilities_interior,
-        facilities_exterior: facilities_exterior
-          ? facilities_exterior
-          : user?.facilities_exterior,
-        land_area: land_area ? land_area : user?.land_area,
-        property_area: property_area ? property_area : user?.property_area,
-        is_rent: isRentValue ? isRentValue : user?.is_rent,
-        rent_period: rent_period ? rent_period : user?.rent_period,
-        interior: interior ? interior : user?.interior,
-        price: price ? price : user?.price,
+        title: title || user?.title,
+        address: address || user?.address,
+        provinsi: provinsi || user?.provinsi,
+        kota: kota || user?.kota,
+        kecamatan: kecamatan || user?.kecamatan,
+        kelurahan: kelurahan || user?.kelurahan,
+        type: type || user?.type,
+        sub_type: sub_type || user?.sub_type,
+        description: description || user?.description,
+        bedroom_qty: bedroom_qty || user?.bedroom_qty,
+        bathroom_qty: bathroom_qty || user?.bathroom_qty,
+        carport_qty: carport_qty || user?.carport_qty,
+        story_qty: story_qty || user?.story_qty,
+        bathroom_maid_qty: bathroom_maid_qty || user?.bathroom_maid_qty,
+        bedroom_maid_qty: bedroom_maid_qty || user?.bedroom_maid_qty,
+        total_room: total_room || user?.total_room,
+        year_of_build: year_of_build || user?.year_of_build,
+        facilities_interior: facilities_interior || user?.facilities_interior,
+        facilities_exterior: facilities_exterior || user?.facilities_exterior,
+        land_area: land_area || user?.land_area,
+        property_area: property_area || user?.property_area,
+        is_rent: isRentValue || user?.is_rent,
+        rent_period: rent_period || user?.rent_period,
+        interior: interior || user?.interior,
+        price: price || user?.price,
         available_from: available_from
           ? availableFromDate
           : user?.available_from,
-        price_per_meter: price_per_meter
-          ? price_per_meter
-          : user?.price_per_meter,
-        wattage: wattage ? wattage : user?.wattage,
-        sertificate: sertificate ? sertificate : user?.sertificate,
-        map_location: map_location ? map_location : user?.map_location,
+        price_per_meter: price_per_meter || user?.price_per_meter,
+        wattage: wattage || user?.wattage,
+        sertificate: sertificate || user?.sertificate,
+        map_location: map_location || user?.map_location,
         picture:
           combinedPicture?.length || picture_remove
             ? combinedPicture
@@ -409,6 +376,71 @@ const editPost = async (req: Request, res: Response) => {
   }
 };
 
+const editSave = async (req: Request, res: Response) => {
+  type RequestBody = {
+    post_id: string;
+    id: string;
+  };
+
+  try {
+    const { post_id, id }: RequestBody = req.body;
+
+    const getIdToken: string = (req as any).id;
+
+    const getPrevSave = await prisma.user.findUnique({
+      where: { id: getIdToken },
+      select: {
+        save: true,
+      },
+    });
+
+    let existingValues;
+    if (getPrevSave?.save?.length) {
+      existingValues = getPrevSave?.save?.includes(post_id);
+    }
+
+    if (!existingValues) {
+      await prisma.save.create({
+        data: {
+          post_id,
+          user_id: getIdToken,
+        },
+      });
+
+      let combinedSave = getPrevSave
+        ? [...getPrevSave?.save, post_id]
+        : [post_id];
+
+      await prisma.user.update({
+        where: { id: getIdToken },
+        data: { save: combinedSave },
+      });
+
+      res.status(201).json({
+        message: `Success save a post`,
+      });
+    } else {
+      await prisma.save.delete({
+        where: { id },
+      });
+
+      let filteredSave = getPrevSave?.save.filter((value) => value !== post_id);
+
+      await prisma.user.update({
+        where: { id: getIdToken },
+        data: { save: filteredSave },
+      });
+
+      res.status(200).json({
+        message: `Success delete a post`,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
-module.exports = { addPost, editPost };
+
+module.exports = { addPost, editPost, editSave  };

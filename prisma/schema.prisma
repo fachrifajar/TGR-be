@@ -26,6 +26,7 @@ model User {
   ref_token         String?
   reset_token       String?
   Post              Post[]
+  Save              Save[]
 }
 
 model Post {
@@ -66,4 +67,15 @@ model Post {
   picture             String[] @default([])
   created_at          DateTime @default(now())
   updated_at          DateTime @default(now()) @updatedAt
+  Save                Save[]
+}
+
+model Save {
+  id         String   @id @unique @default(cuid())
+  user       User     @relation(fields: [user_id], references: [id])
+  user_id    String
+  post       Post     @relation(fields: [post_id], references: [id])
+  post_id    String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
 }

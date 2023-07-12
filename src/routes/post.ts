@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router();
-const { addPost, editPost } = require("../controller/post");
+const { addPost, editPost, editSave } = require("../controller/post");
 const { validateToken } = require("../middleware/auth");
 const middlewareUpload = require("../middleware/upload");
 
@@ -33,5 +33,7 @@ router.patch(
   middlewareUpload.fileSizeLimiter,
   editPost
 );
+
+router.post("/edit-save", validateToken, editSave);
 
 module.exports = router;
