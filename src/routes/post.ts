@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router();
-const { addPost, editPost, editSave } = require("../controller/post");
+const { addPost, editPost, editSave, getPost, deletePost } = require("../controller/post");
 const { validateToken } = require("../middleware/auth");
 const middlewareUpload = require("../middleware/upload");
 
@@ -35,5 +35,10 @@ router.patch(
 );
 
 router.post("/edit-save", validateToken, editSave);
+
+router.delete("/delete/:id", validateToken, deletePost);
+
+
+router.get("/", getPost);
 
 module.exports = router;

@@ -23,8 +23,8 @@ const addPost = async (req: Request, res: Response) => {
     bedroom_maid_qty?: string;
     total_room?: string;
     year_of_build?: string;
-    facilities_interior?: string[];
-    facilities_exterior?: string[];
+    facilities_interior?: string;
+    facilities_exterior?: string;
     land_area?: string;
     property_area: string;
     is_rent: string;
@@ -76,6 +76,9 @@ const addPost = async (req: Request, res: Response) => {
     const getIdToken: string = (req as any).id;
 
     const isRentValue: boolean = is_rent === "true";
+
+    const facilities_interior_arr = facilities_interior?.split(",");
+    const facilities_exterior_arr = facilities_exterior?.split(",");
 
     const availableFromDate: Date = new Date(available_from);
 
@@ -142,8 +145,8 @@ const addPost = async (req: Request, res: Response) => {
         bedroom_maid_qty,
         total_room,
         year_of_build,
-        facilities_interior,
-        facilities_exterior,
+        facilities_interior: facilities_interior_arr,
+        facilities_exterior: facilities_exterior_arr,
         land_area,
         property_area,
         is_rent: isRentValue,
@@ -190,8 +193,8 @@ const editPost = async (req: Request, res: Response) => {
     bedroom_maid_qty?: string;
     total_room?: string;
     year_of_build?: string;
-    facilities_interior?: string[];
-    facilities_exterior?: string[];
+    facilities_interior?: string;
+    facilities_exterior?: string;
     land_area?: string;
     property_area?: string;
     is_rent?: string;
@@ -250,6 +253,8 @@ const editPost = async (req: Request, res: Response) => {
     });
 
     const isRentValue: boolean = is_rent === "true";
+    const facilities_interior_arr = facilities_interior?.split(",");
+    const facilities_exterior_arr = facilities_exterior?.split(",");
 
     let availableFromDate: Date | undefined;
     if (available_from) {
@@ -342,8 +347,10 @@ const editPost = async (req: Request, res: Response) => {
         bedroom_maid_qty: bedroom_maid_qty || user?.bedroom_maid_qty,
         total_room: total_room || user?.total_room,
         year_of_build: year_of_build || user?.year_of_build,
-        facilities_interior: facilities_interior || user?.facilities_interior,
-        facilities_exterior: facilities_exterior || user?.facilities_exterior,
+        facilities_interior:
+          facilities_interior_arr || user?.facilities_interior,
+        facilities_exterior:
+          facilities_exterior_arr || user?.facilities_exterior,
         land_area: land_area || user?.land_area,
         property_area: property_area || user?.property_area,
         is_rent: isRentValue || user?.is_rent,
@@ -379,11 +386,10 @@ const editPost = async (req: Request, res: Response) => {
 const editSave = async (req: Request, res: Response) => {
   type RequestBody = {
     post_id: string;
-    id: string;
   };
 
   try {
-    const { post_id, id }: RequestBody = req.body;
+    const { post_id }: RequestBody = req.body;
 
     const getIdToken: string = (req as any).id;
 
@@ -417,11 +423,13 @@ const editSave = async (req: Request, res: Response) => {
       });
 
       res.status(201).json({
-        message: `Success save a post`,
+        message: `Success save`,
       });
     } else {
-      await prisma.save.delete({
-        where: { id },
+      await prisma.save.deleteMany({
+        where: {
+          AND: [{ post_id: post_id }, { user_id: getIdToken }],
+        },
       });
 
       let filteredSave = getPrevSave?.save.filter((value) => value !== post_id);
@@ -432,7 +440,7 @@ const editSave = async (req: Request, res: Response) => {
       });
 
       res.status(200).json({
-        message: `Success delete a post`,
+        message: `Success delete save`,
       });
     }
   } catch (error) {
@@ -441,6 +449,68 @@ const editSave = async (req: Request, res: Response) => {
   }
 };
 
+const deletePost = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const getData = await prisma.post.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        picture: true,
+      },
+    });
+    console.log(getData?.picture);
+  
+    if (getData?.picture?.length) {
+      for (const picture of getData?.picture) {
+        await cloudinary.v2.uploader.destroy(
+          picture,
+          { folder: "TGR" },
+          function (error: any, result: any) {
+            if (error) {
+              throw error;
+            }
+          }
+        );
+      }
+    }
+
+    await prisma.save.deleteMany({
+      where: {
+        post_id: id,
+      },
+    });
+    
+    await prisma.post.delete({
+      where: {
+        id,
+      },
+    });
 
 
-module.exports = { addPost, editPost, editSave  };
+    res.status(200).json({
+      message: `Success delete a post`,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getPost = async (req: Request, res: Response) => {
+  try {
+    const data = await prisma.post.findMany();
+
+    res.status(200).json({
+      message: "Success get data",
+      data,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+module.exports = { addPost, editPost, editSave, deletePost, getPost };
