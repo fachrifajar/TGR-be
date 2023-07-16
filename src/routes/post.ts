@@ -7,6 +7,7 @@ const {
   getPost,
   deletePost,
   incrementViewCount,
+  getMyPost,
 } = require("../controller/post");
 const { validateToken } = require("../middleware/auth");
 const middlewareUpload = require("../middleware/upload");
@@ -53,5 +54,7 @@ router.post("/edit-save", validateToken, editSave);
 router.delete("/delete/:id", validateToken, deletePost);
 
 router.get("/:key?", getPost);
+
+router.get("/personalPost/byid", validateToken, getMyPost);
 
 module.exports = router;

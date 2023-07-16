@@ -622,6 +622,27 @@ const getPost = async (req: Request, res: Response) => {
   }
 };
 
+const getMyPost = async (req: Request, res: Response) => {
+  try {
+    const getIdToken: string = (req as any).id;
+
+    const data = await prisma.post.findMany({
+      where: {
+        user_id: getIdToken,
+      },
+    });
+
+    res.status(200).json({
+      message: "Success get my post",
+      total: data?.length,
+      data,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   addPost,
   editPost,
@@ -629,4 +650,5 @@ module.exports = {
   deletePost,
   getPost,
   incrementViewCount,
+  getMyPost,
 };
