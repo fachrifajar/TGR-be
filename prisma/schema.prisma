@@ -63,6 +63,7 @@ model Post {
   wattage             String?
   sertificate         String
   map_location        String
+  view_count          Int      @default(0)
   is_archived         Boolean  @default(false)
   picture             String[] @default([])
   created_at          DateTime @default(now())

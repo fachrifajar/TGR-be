@@ -383,6 +383,33 @@ const editPost = async (req: Request, res: Response) => {
   }
 };
 
+const incrementViewCount = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const post = await prisma.post.findUnique({
+      where: { id },
+    });
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Increment the view count
+    await prisma.post.update({
+      where: { id },
+      data: {
+        view_count: post.view_count + 1,
+      },
+    });
+
+    return res.status(200).json({ message: "View count updated successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 const editSave = async (req: Request, res: Response) => {
   type RequestBody = {
     post_id: string;
@@ -462,7 +489,7 @@ const deletePost = async (req: Request, res: Response) => {
       },
     });
     console.log(getData?.picture);
-  
+
     if (getData?.picture?.length) {
       for (const picture of getData?.picture) {
         await cloudinary.v2.uploader.destroy(
@@ -482,13 +509,12 @@ const deletePost = async (req: Request, res: Response) => {
         post_id: id,
       },
     });
-    
+
     await prisma.post.delete({
       where: {
         id,
       },
     });
-
 
     res.status(200).json({
       message: `Success delete a post`,
@@ -500,17 +526,58 @@ const deletePost = async (req: Request, res: Response) => {
 };
 
 const getPost = async (req: Request, res: Response) => {
-  try {
-    const data = await prisma.post.findMany();
+  type responseData = {
+    [key: string]: any;
+  };
 
-    res.status(200).json({
-      message: "Success get data",
-      data,
-    });
+  try {
+    const { key } = req.params;
+    const { pageSize, pageNumber }: any = req.query;
+    let data: responseData;
+    let skip;
+    if (pageSize || pageNumber)
+      skip = (parseInt(pageNumber) - 1) * parseInt(pageSize);
+
+    if (key) {
+      data = await prisma.post.findMany({
+        where: {
+          is_archived: false,
+          title: {
+            contains: key,
+            mode: "insensitive",
+          },
+        },
+      });
+
+      res.status(200).json({
+        message: "Success get search data",
+        data,
+      });
+    } else {
+      data = await prisma.post.findMany({
+        where: { is_archived: false },
+        skip,
+        take: parseInt(pageSize),
+      });
+
+      res.status(200).json({
+        message: "Success get pagination data",
+        page: pageNumber,
+        dataPerPage: pageSize,
+        data,
+      });
+    }
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
-module.exports = { addPost, editPost, editSave, deletePost, getPost };
+module.exports = {
+  addPost,
+  editPost,
+  editSave,
+  deletePost,
+  getPost,
+  incrementViewCount,
+};
