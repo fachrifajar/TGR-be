@@ -395,7 +395,6 @@ const incrementViewCount = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Increment the view count
     await prisma.post.update({
       where: { id },
       data: {
@@ -532,39 +531,89 @@ const getPost = async (req: Request, res: Response) => {
 
   try {
     const { key } = req.params;
-    const { pageSize, pageNumber }: any = req.query;
-    let data: responseData;
+    const {
+      pageSize,
+      pageNumber,
+      sortBy,
+      searchBy,
+      searchFilter,
+      searchById,
+    }: any = req.query;
+
+    let data: responseData | null;
     let skip;
+
     if (pageSize || pageNumber)
       skip = (parseInt(pageNumber) - 1) * parseInt(pageSize);
 
-    if (key) {
-      data = await prisma.post.findMany({
+    if (searchById) {
+      data = await prisma.post.findUnique({
         where: {
           is_archived: false,
-          title: {
-            contains: key,
-            mode: "insensitive",
-          },
+          id: searchById,
         },
       });
 
       res.status(200).json({
-        message: "Success get search data",
+        message: "Success get search by ID",
         data,
       });
     } else {
-      data = await prisma.post.findMany({
-        where: { is_archived: false },
-        skip,
-        take: parseInt(pageSize),
-      });
+      const filterConditions: any = {
+        is_archived: false,
+        OR: [
+          { title: { contains: key, mode: "insensitive" } },
+          { address: { contains: key, mode: "insensitive" } },
+          { provinsi: { contains: key, mode: "insensitive" } },
+          { kota: { contains: key, mode: "insensitive" } },
+          { kecamatan: { contains: key, mode: "insensitive" } },
+          { kelurahan: { contains: key, mode: "insensitive" } },
+        ],
+      };
+
+      if (searchBy || searchFilter) {
+        if (searchBy) {
+          filterConditions.type = searchBy;
+        }
+        if (searchFilter) {
+          filterConditions.is_rent = searchFilter === "dijual" ? false : true;
+        }
+      }
+
+      let orderBy: any = {};
+      if (sortBy === "popular") {
+        orderBy = { view_count: "desc" };
+      } else if (sortBy === "newest") {
+        orderBy = { created_at: "desc" };
+      } else if (sortBy === "hi-price") {
+        orderBy = { price: "desc" };
+      } else if (sortBy === "lo-price") {
+        orderBy = { price: "asc" };
+      } else if (!sortBy) {
+        orderBy = { created_at: "desc" };
+      }
+
+      const [totalCount, postData] = await Promise.all([
+        prisma.post.count({
+          where: filterConditions,
+        }),
+        prisma.post.findMany({
+          where: filterConditions,
+          orderBy,
+          skip,
+          take: parseInt(pageSize as string),
+        }),
+      ]);
+
+      const totalPages = Math.ceil(totalCount / parseInt(pageSize as string));
 
       res.status(200).json({
-        message: "Success get pagination data",
+        message: "Success get Data",
         page: pageNumber,
         dataPerPage: pageSize,
-        data,
+        totalPages,
+        totalData: totalCount,
+        data: postData,
       });
     }
   } catch (error) {
